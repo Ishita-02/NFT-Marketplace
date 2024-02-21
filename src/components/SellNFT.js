@@ -11,6 +11,16 @@ export default function SellNFT () {
     const [message, updateMessage] = useState('');
     const location = useLocation();
 
+    async function OnChangeFile(e) {
+        try {
+            const response = await uploadFileToIPFS(file);
+            if(response.success === true) {
+                console.log("Uploaded image to Pinata:", response.pinataURL);
+            }
+            
+        }
+    }
+
     return (
         <div className="">
         <Navbar></Navbar>
@@ -31,7 +41,7 @@ export default function SellNFT () {
                 </div>
                 <div>
                     <label className="block text-purple-500 text-sm font-bold mb-2" htmlFor="image">Upload Image (&lt;500 KB)</label>
-                    <input type={"file"} onChange={""}></input>
+                    <input type={"file"} onChange={OnChangeFile}></input>
                 </div>
                 <br></br>
                 <div className="text-red-500 text-center">{message}</div>
