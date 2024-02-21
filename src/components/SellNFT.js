@@ -16,8 +16,62 @@ export default function SellNFT () {
             const response = await uploadFileToIPFS(file);
             if(response.success === true) {
                 console.log("Uploaded image to Pinata:", response.pinataURL);
+                setFileURL(response.pinataURL);
             }
-            
+        }
+        catch(e) {
+            console.log("Error during file upload", e);
+        }
+    }
+
+    async function uploadMetadataToIPFS() {
+        const {name, description, price} = formParams;
+
+        if(!name || !description || ~price || !fileURL) {
+            return;
+        }
+
+        const nftJSON = {
+            name, description, price, image: fileURL
+        };
+
+        try {
+            const response = await uploadJSONToIPFS(nftJSON);
+            if(response.success === true) {
+                console.log("Uploaded JSON to Pinata: ", response);
+                return response.pinataURL;
+            }
+        } catch(e) {
+            console.log("Error uploading JSON metadata: ", e);
+        }
+    }
+
+    async function listNFT(e) {
+        e.preventDefault();
+
+        try {
+            const metadataURL = await uploadMetadataToIPFS();
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+
+            updateMessage("Please wait...... uploading (upto 5 mins)");
+
+            let contract = new ethers.Contract(Marketplace.address, Marketplace.abi, signer);
+
+            const price = ethers.utils.parseUnits(formParams.price, 'ethers');
+            let listingPrice = await contract.getListPrice();
+            listingPrice = listingPrice.toString();
+
+            let transaction = await contract.createToken( metadataURL, price, {value: listingPrice});
+            await transaction.wait();
+
+            alert("Successfully listed your NFT!");
+            updateMessage("");
+            updateFormParams({name:'', description: '', price: ''});
+            window.location.replace("/");
+        }
+        catch(e) {
+            alert("Upload error: " +e);
         }
     }
 
@@ -45,7 +99,7 @@ export default function SellNFT () {
                 </div>
                 <br></br>
                 <div className="text-red-500 text-center">{message}</div>
-                <button onClick={""} className="font-bold mt-10 w-full bg-purple-500 text-white rounded p-2 shadow-lg" id="list-button">
+                <button onClick={listNFT} className="font-bold mt-10 w-full bg-purple-500 text-white rounded p-2 shadow-lg" id="list-button">
                     List NFT
                 </button>
             </form>
