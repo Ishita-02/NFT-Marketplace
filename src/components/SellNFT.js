@@ -12,6 +12,7 @@ export default function SellNFT () {
     const location = useLocation();
 
     async function OnChangeFile(e) {
+        var file = e.target.files[0];
         try {
             const response = await uploadFileToIPFS(file);
             if(response.success === true) {
